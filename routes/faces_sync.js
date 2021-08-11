@@ -159,8 +159,8 @@ function syncTransitClients() {
 
 router.get("/", async (req, res) => {
     await syncUsers();
-    sync_care_giver();
-    syncClients();
+    await sync_care_giver();
+    await syncClients();
     syncAppointments();
     syncPMTCT();
     sync_dfc();
