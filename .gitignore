@@ -1,0 +1,8 @@
+.env
+/node_modules
+.env.swp
+..env.swp
+/.vscode
+/.history
+.package-lock.json
+/.package-lock.json
