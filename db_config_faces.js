@@ -8,24 +8,25 @@ const port = process.env.DB_PORT_FACES;
 const db_server = process.env.DB_HOST_FACES;
 
 const sequelize = new Sequelize(database, username, password, {
-  host: db_server,
-  port: port,
-  dialect: "mysql"
+    host: db_server,
+    port: port,
+    query: {raw: true},
+    dialect: "mysql"
 });
 
 const connect = async () => {
-  await sequelize
-      .authenticate()
-      .then(() => {
-        console.log("Connection has been established successfully.");
-      })
-      .catch(err => {
-        console.log("Unable to connect to the database:", err.message);
-      });
+    await sequelize
+        .authenticate()
+        .then(() => {
+            console.log("Connection has been established successfully.");
+        })
+        .catch(err => {
+            console.log("Unable to connect to the database:", err.message);
+        });
 };
 const db = {
-  sequelize: sequelize,
-  connect
+    sequelize: sequelize,
+    connect
 };
 
 module.exports = db;
