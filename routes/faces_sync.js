@@ -22,6 +22,8 @@ const {PMTCT} = require("../models_generated/tbl_pmtct");
 const {ClientOutcome, ClientOutcomeFaces} = require("../models_faces/tbl_clnt_outcome");
 const {OtherAppType} = require("../models_generated/tbl_other_appointment_types");
 const {OtherAppTypeFaces} = require("../models_faces/tbl_other_appointment_types");
+const {TransitFaces} = require("../models_faces/tbl_transit_app");
+const {Transit} = require("../models_generated/tbl_transit_app");
 moment.tz.setDefault("Africa/Nairobi");
 
 async function syncUsers() {
@@ -418,15 +420,42 @@ async function syncOtherAppType() {
     }
 }
 
-function syncTransitClients() {
+async function syncTransitClients() {
+    try {
+        let max_existing_transit = await TransitFaces.findOne({
+            attributes: [
+                [Sequelize.fn('MAX', Sequelize.col('id')), 'id']
+            ]
+        }) || 0
 
+        let sms_transits = await Transit.findAll({
+            include: {
+                model: Clients,
+                required: true,
+                where: {partner_id: 18}
+            },
+            where: {id: {[Op.gt]: max_existing_transit.id}},
+            raw: true,
+            nest: true
+        })
+
+        for (let i = 0; i < sms_transits.length; i++) {
+            let transitFaces = await TransitFaces.findOne({where: {id: sms_transits[i].id}});
+            if (!transitFaces) {
+                console.log(`Insert transit client details...${sms_transits[i].id}`)
+                TransitFaces.create(sms_transits[i]);
+            }
+        }
+    } catch (e) {
+        console.log(e)
+    }
 }
 
 router.get("/", async (req, res) => {
-    await syncUsers();
-    await sync_care_giver();
-    await syncClients();
-    await syncAppointments();
+    // await syncUsers();
+    // await sync_care_giver();
+    // await syncClients();
+    // await syncAppointments();
     await syncPMTCT();
     await sync_dfc();
     await syncClientOutcomes();
@@ -434,7 +463,7 @@ router.get("/", async (req, res) => {
     // $this->syncOtherFnlOutcome();t
     // $this->syncBroadcast();t
     // $this->syncSmsQueue();t
-    syncTransitClients();
+    await syncTransitClients();
     // $this->syncUserOutgoing();t
 
     //$this->syncClientOutgoing();t
