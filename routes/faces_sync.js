@@ -1,12 +1,12 @@
 const {User} = require("../models_generated/tbl_users");
 const {Clients} = require("../models_generated/tbl_client");
 const {CareGiver} = require("../models_generated/tbl_caregiver_not_on_care");
-const {Appointments} = require("../models_generated/tbl_appointment");
+const {Appointment} = require("../models_generated/tbl_appointment");
 
 const {UserFaces} = require("../models_faces/tbl_users");
 const {ClientsFaces} = require("../models_faces/tbl_client");
 const {CareGiverFaces} = require("../models_faces/tbl_caregiver_not_on_care");
-const {AppointmentsFace} = require("../models_faces/tbl_appointment");
+const {AppointmentFaces} = require("../models_faces/tbl_appointment");
 
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
@@ -15,6 +15,7 @@ const router = express.Router();
 
 const _ = require("lodash");
 const moment = require("moment");
+moment.tz.setDefault("Africa/Nairobi");
 
 async function syncUsers() {
     try {
@@ -143,8 +144,10 @@ async function syncClients() {
         for (let i = 0; i < clients.length; i++) {
             let clientFaces = await ClientsFaces.findOne({where: {id: clients[i].id}});
             if (!clientFaces) {
-                console.log(`Inserting new Client...${clientFaces}`)
-                await ClientsFaces.create(clients[i]).then((res) => console.log(res)).catch((err) => console.log(err));
+                console.log(`Inserting new Client...${clients[i]}`)
+                await ClientsFaces.create(clients[i])
+                    .then((res) => console.log(res))
+                    .catch((err) => console.log(err));
                 // $a_number = $a_number + 1;
             }
         }
@@ -182,7 +185,82 @@ async function syncClients() {
 
 }
 
-function syncAppointments() {
+async function syncAppointments() {
+    try {
+        let max_existing_appnt = await AppointmentFaces.findOne({
+            attributes: [
+                [Sequelize.fn('MAX', Sequelize.col('id')), 'id']
+            ]
+        }) || 0
+        // console.log(max_exisiting_user.id)
+
+        let appnts = await Appointment.findAll({
+            include: {
+                model: Clients,
+                required: true,
+                where: {
+                    partner_id: 18
+                }
+            },
+            where: {
+                id: {[Op.gt]: max_existing_appnt.id}
+            },
+            raw: true,
+            nest: true
+        })
+        for (let i = 0; i < appnts.length; i++) {
+            let appntFaces = await AppointmentFaces.findOne({where: {id: appnts[i].id}});
+            if (!appntFaces) {
+                console.log(`Inserting new Appointment...${appnts[i].id}`)
+                await AppointmentFaces.create(appnts[i])
+                    .then((res) => console.log(res))
+                    .catch((err) => console.log(err));
+                // $a_number = $a_number + 1;
+            }
+        }
+
+        let updates_appnt = await Appointment.findAll({
+            include: {
+                model: Clients,
+                required: true,
+                where: {
+                    partner_id: 18
+                }
+            },
+            where: {
+                updated_at: {
+                    [Op.gte]: moment().subtract(2, 'days').set({hour:0,minute:0,second:0,millisecond:0}).format("YYYY-MM-DD")
+                }
+            },
+            raw: true,
+            nest: true
+        });
+
+        console.log(updates_appnt.length)
+
+        for (let i = 0; i < updates_appnt.length; i++) {
+            let FoundApp = await AppointmentFaces.findOne({where: {id: updates_appnt[i].id}});
+            if (FoundApp) {
+                console.log("Updating existing Appointment")
+                console.log(updates_appnt[i].id)
+                await AppointmentFaces.update(updates_appnt[i], {where: {id: updates_appnt[i].id}})
+                    .then((res) => console.log(res))
+                    .catch((err) => console.log(err));
+                // $a_number = $a_number + 1;
+            } else {
+                console.log('wrong path')
+                await AppointmentFaces.create(updates_appnt[i])
+                    .then((res) => console.log(res))
+                    .catch((err) => console.log(err));
+            }
+        }
+        // $end_time = Carbon::now();
+
+        // $this->send_email($start_time, $end_time, $users->count() + $updates_users->count() . " Users", $a_number . " Users", "Users sync");
+        return true
+    } catch (e) {
+        console.log(e)
+    }
 
 }
 
@@ -210,7 +288,7 @@ router.get("/", async (req, res) => {
     await syncUsers();
     await sync_care_giver();
     await syncClients();
-    syncAppointments();
+    await syncAppointments();
     syncPMTCT();
     sync_dfc();
     syncClientOutcomes();
