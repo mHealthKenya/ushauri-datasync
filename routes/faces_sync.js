@@ -15,6 +15,7 @@ const router = express.Router();
 
 const _ = require("lodash");
 const moment = require("moment");
+const {PmtctFaces} = require("../models_faces/tbl_pmtct");
 moment.tz.setDefault("Africa/Nairobi");
 
 async function syncUsers() {
@@ -229,7 +230,12 @@ async function syncAppointments() {
             },
             where: {
                 updated_at: {
-                    [Op.gte]: moment().subtract(2, 'days').set({hour:0,minute:0,second:0,millisecond:0}).format("YYYY-MM-DD")
+                    [Op.gte]: moment().subtract(2, 'days').set({
+                        hour: 0,
+                        minute: 0,
+                        second: 0,
+                        millisecond: 0
+                    }).format("YYYY-MM-DD")
                 }
             },
             raw: true,
@@ -264,7 +270,37 @@ async function syncAppointments() {
 
 }
 
-function syncPMTCT() {
+async function syncPMTCT() {
+    try {
+        let max_existing_mother = await PmtctFaces.findOne({
+            attributes: [
+                [Sequelize.fn('MAX', Sequelize.col('id')), 'id']
+            ]
+        }) || 0
+
+        let mother_module = await PMTCT.findAll({
+            include: {
+                model: User,
+                required: true,
+                where: {partner_id: 18}
+            },
+            where: {
+                id: {[Op.gt]: max_existing_mother.id}
+            },
+            raw: true,
+            nest: true
+        })
+
+        for (let i = 0; i < mother_module.length; i++) {
+            let motherFACES = await PmtctFaces.findOne({where: {id: mother_module[i].id}});
+            if (!motherFACES) {
+                console.log(`Insert pmtct details...${mother_module[i].id}`)
+                CareGiverFaces.create(mother_module[i]);
+            }
+        }
+    } catch (e) {
+        console.log(e)
+    }
 
 }
 
@@ -289,7 +325,7 @@ router.get("/", async (req, res) => {
     await sync_care_giver();
     await syncClients();
     await syncAppointments();
-    syncPMTCT();
+    await syncPMTCT();
     sync_dfc();
     syncClientOutcomes();
     syncOtherAppType();
