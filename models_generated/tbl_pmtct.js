@@ -175,4 +175,4 @@ const PMTCT = sequelize.sequelize.define('tbl_pmtct', {
 
 PMTCT.belongsTo(User, {foreignKey: "created_by"});
 
-module.exports.PmtctFaces = PMTCT
+module.exports.PMTCT = PMTCT

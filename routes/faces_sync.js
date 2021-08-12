@@ -16,6 +16,9 @@ const router = express.Router();
 const _ = require("lodash");
 const moment = require("moment");
 const {PmtctFaces} = require("../models_faces/tbl_pmtct");
+const {DFC} = require("../models_generated/tbl_dfc_module");
+const {DFCFaces} = require("../models_faces/tbl_dfc_module");
+const {PMTCT} = require("../models_generated/tbl_pmtct");
 moment.tz.setDefault("Africa/Nairobi");
 
 async function syncUsers() {
@@ -121,7 +124,6 @@ async function sync_care_giver() {
         console.log(e)
         // $this->send_err_email($e->getMessage(), "Caregiver sync");
     }
-
 }
 
 async function syncClients() {
@@ -301,10 +303,39 @@ async function syncPMTCT() {
     } catch (e) {
         console.log(e)
     }
-
 }
 
-function sync_dfc() {
+async function sync_dfc() {
+    try {
+        let max_existing_dfc = await DFCFaces.findOne({
+            attributes: [
+                [Sequelize.fn('MAX', Sequelize.col('id')), 'id']
+            ]
+        }) || 0
+
+        let dfc_module = await DFC.findAll({
+            include: {
+                model: Clients,
+                required: true,
+                where: {partner_id: 18}
+            },
+            where: {
+                id: {[Op.gt]: max_existing_dfc.id}
+            },
+            raw: true,
+            nest: true
+        })
+
+        for (let i = 0; i < dfc_module.length; i++) {
+            let dfcFACES = await DFCFaces.findOne({where: {id: dfc_module[i].id}});
+            if (!dfcFACES) {
+                console.log(`Insert pmtct details...${dfc_module[i].id}`)
+                DFCFaces.create(dfc_module[i]);
+            }
+        }
+    } catch (e) {
+        console.log(e)
+    }
 
 }
 
@@ -326,7 +357,7 @@ router.get("/", async (req, res) => {
     await syncClients();
     await syncAppointments();
     await syncPMTCT();
-    sync_dfc();
+    await sync_dfc();
     syncClientOutcomes();
     syncOtherAppType();
     // $this->syncOtherFnlOutcome();t
