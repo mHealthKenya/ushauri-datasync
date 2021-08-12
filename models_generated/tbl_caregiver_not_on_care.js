@@ -109,7 +109,6 @@ const CareGiver = sequelize.sequelize.define('tbl_caregiver_not_on_care',
         ]
     });
 
-// User.hasMany(CareGiver, {as: 'created_by', foreignKey})
 CareGiver.belongsTo(User, { foreignKey: "created_by" });
 
 module.exports.CareGiver = CareGiver
