@@ -1,6 +1,7 @@
 const sequelize = require("../db_config");
 const Sequelize = require("sequelize");
 const {User} = require("./tbl_users");
+const {Appointment} = require("./tbl_appointment");
 
 const OtherAppType = sequelize.sequelize.define('tbl_other_appointment_types', {
   id: {
@@ -69,5 +70,6 @@ const OtherAppType = sequelize.sequelize.define('tbl_other_appointment_types', {
 });
 
 OtherAppType.belongsTo(User, {foreignKey: "created_by"});
+OtherAppType.belongsTo(Appointment, {foreignKey: "appointment_id"});
 
 module.exports.OtherAppType = OtherAppType

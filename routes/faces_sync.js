@@ -385,11 +385,16 @@ async function syncOtherAppType() {
         }) || 0
 
         let other_app_types = await OtherAppType.findAll({
-            include: {
-                model: User,
-                required: true,
-                where: {partner_id: 18}
-            },
+            include: [
+                {
+                    model: User,
+                    required: true,
+                    where: {partner_id: 18}
+                },
+                {
+                    model: Appointment,
+                    required: false
+                }],
             where: {
                 id: {[Op.gt]: max_existing_other.id}
             },
@@ -456,9 +461,9 @@ router.get("/", async (req, res) => {
     // await sync_care_giver();
     // await syncClients();
     // await syncAppointments();
-    await syncPMTCT();
-    await sync_dfc();
-    await syncClientOutcomes();
+    // await syncPMTCT();
+    // await sync_dfc();
+    // await syncClientOutcomes();
     await syncOtherAppType();
     // $this->syncOtherFnlOutcome();t
     // $this->syncBroadcast();t
