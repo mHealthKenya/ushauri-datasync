@@ -19,6 +19,7 @@ const {PmtctFaces} = require("../models_faces/tbl_pmtct");
 const {DFC} = require("../models_generated/tbl_dfc_module");
 const {DFCFaces} = require("../models_faces/tbl_dfc_module");
 const {PMTCT} = require("../models_generated/tbl_pmtct");
+const {ClientOutcome, ClientOutcomeFaces} = require("../models_faces/tbl_clnt_outcome");
 moment.tz.setDefault("Africa/Nairobi");
 
 async function syncUsers() {
@@ -336,10 +337,39 @@ async function sync_dfc() {
     } catch (e) {
         console.log(e)
     }
-
 }
 
-function syncClientOutcomes() {
+async function syncClientOutcomes() {
+    try {
+        let max_existing_outcome = await ClientOutcomeFaces.findOne({
+            attributes: [
+                [Sequelize.fn('MAX', Sequelize.col('id')), 'id']
+            ]
+        }) || 0
+
+        let client_outcomes = await ClientOutcome.findAll({
+            include: {
+                model: Clients,
+                required: true,
+                where: {partner_id: 18}
+            },
+            where: {
+                id: {[Op.gt]: max_existing_outcome.id}
+            },
+            raw: true,
+            nest: true
+        })
+
+        for (let i = 0; i < client_outcomes.length; i++) {
+            let outcomesFaces = await ClientOutcomeFaces.findOne({where: {id: client_outcomes[i].id}});
+            if (!outcomesFaces) {
+                console.log(`Insert pmtct details...${client_outcomes[i].id}`)
+                ClientOutcomeFaces.create(client_outcomes[i]);
+            }
+        }
+    } catch (e) {
+        console.log(e)
+    }
 
 }
 
@@ -358,7 +388,7 @@ router.get("/", async (req, res) => {
     await syncAppointments();
     await syncPMTCT();
     await sync_dfc();
-    syncClientOutcomes();
+    await syncClientOutcomes();
     syncOtherAppType();
     // $this->syncOtherFnlOutcome();t
     // $this->syncBroadcast();t

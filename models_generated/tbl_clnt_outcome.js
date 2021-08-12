@@ -1,14 +1,16 @@
-const Sequelize = require('sequelize');
-module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('tbl_clnt_outcome', {
+const sequelize = require("../db_config");
+const Sequelize = require("sequelize");
+const {Clients} = require('./tbl_client')
+
+const ClientOutcome = sequelize.sequelize.define('tbl_clnt_outcome', {
     id: {
       autoIncrement: true,
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       allowNull: false,
       primaryKey: true
     },
     client_id: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: 'tbl_client',
@@ -16,7 +18,7 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     appointment_id: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: 'tbl_appointment',
@@ -24,7 +26,7 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     outcome: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       allowNull: true,
       references: {
         model: 'tbl_outcome',
@@ -32,61 +34,61 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     tracer_name: {
-      type: DataTypes.STRING(50),
+      type: Sequelize.STRING(50),
       allowNull: true
     },
     created_at: {
-      type: DataTypes.DATE,
+      type: Sequelize.DATE,
       allowNull: false,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     },
     updated_at: {
-      type: DataTypes.DATE,
+      type: Sequelize.DATE,
       allowNull: false,
       defaultValue: Sequelize.Sequelize.literal('CURRENT_TIMESTAMP')
     },
     deleted_at: {
-      type: DataTypes.DATE,
+      type: Sequelize.DATE,
       allowNull: true
     },
     created_by: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       allowNull: true
     },
     updated_by: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       allowNull: true
     },
     tracing_type: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: Sequelize.INTEGER.UNSIGNED,
       allowNull: true
     },
     tracing_date: {
-      type: DataTypes.DATEONLY,
+      type: Sequelize.DATEONLY,
       allowNull: true
     },
     app_status: {
-      type: DataTypes.ENUM('Missed','Defaulted','LTFU','Notified'),
+      type: Sequelize.ENUM('Missed','Defaulted','LTFU','Notified'),
       allowNull: true
     },
     ushauri_id: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       allowNull: true
     },
     db_source: {
-      type: DataTypes.STRING(25),
+      type: Sequelize.STRING(25),
       allowNull: true
     },
     fnl_outcome: {
-      type: DataTypes.INTEGER,
+      type: Sequelize.INTEGER,
       allowNull: true
     },
     return_date: {
-      type: DataTypes.DATE,
+      type: Sequelize.DATE,
       allowNull: true
     },
     tracing_cost: {
-      type: DataTypes.DOUBLE(11,0),
+      type: Sequelize.DOUBLE(11,0),
       allowNull: true
     }
   }, {
@@ -132,4 +134,7 @@ module.exports = function(sequelize, DataTypes) {
       },
     ]
   });
-};
+
+ClientOutcome.belongsTo(Clients, {foreignKey: "client_id"});
+
+module.exports.ClientOutcome = ClientOutcome
