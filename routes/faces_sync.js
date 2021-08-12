@@ -20,6 +20,8 @@ const {DFC} = require("../models_generated/tbl_dfc_module");
 const {DFCFaces} = require("../models_faces/tbl_dfc_module");
 const {PMTCT} = require("../models_generated/tbl_pmtct");
 const {ClientOutcome, ClientOutcomeFaces} = require("../models_faces/tbl_clnt_outcome");
+const {OtherAppType} = require("../models_generated/tbl_other_appointment_types");
+const {OtherAppTypeFaces} = require("../models_faces/tbl_other_appointment_types");
 moment.tz.setDefault("Africa/Nairobi");
 
 async function syncUsers() {
@@ -363,18 +365,57 @@ async function syncClientOutcomes() {
         for (let i = 0; i < client_outcomes.length; i++) {
             let outcomesFaces = await ClientOutcomeFaces.findOne({where: {id: client_outcomes[i].id}});
             if (!outcomesFaces) {
-                console.log(`Insert pmtct details...${client_outcomes[i].id}`)
+                console.log(`Insert clie details...${client_outcomes[i].id}`)
                 ClientOutcomeFaces.create(client_outcomes[i]);
             }
         }
     } catch (e) {
         console.log(e)
     }
-
 }
 
-function syncOtherAppType() {
+async function syncOtherAppType() {
+    try {
+        let max_existing_other = await OtherAppTypeFaces.findOne({
+            attributes: [
+                [Sequelize.fn('MAX', Sequelize.col('id')), 'id']
+            ]
+        }) || 0
 
+        let other_app_types = await OtherAppType.findAll({
+            include: {
+                model: User,
+                required: true,
+                where: {partner_id: 18}
+            },
+            where: {
+                id: {[Op.gt]: max_existing_other.id}
+            },
+            raw: true,
+            nest: true
+        })
+        //     $other_app_types = OtherAppType::join('tbl_users', 'tbl_other_appointment_types.created_by', '=', 'tbl_users.id')
+        // ->join('tbl_appointment', 'tbl_other_appointment_types.appointment_id', '=', 'tbl_appointment.id')
+        // ->select('tbl_other_appointment_types.*')
+        // ->where('tbl_other_appointment_types.id', '>', $max_exisiting_other_app_type)
+        // ->where('tbl_users.partner_id', 18)->get();
+        console.log(other_app_types.length)
+
+        for (let i = 0; i < other_app_types.length; i++) {
+            let check_app_existence = await OtherAppTypeFaces.findOne({where: {id: other_app_types[i].id}});
+            if (!check_app_existence) {
+                console.log(`Insert other app types details...${other_app_types[i].id}`)
+                OtherAppTypeFaces.create(other_app_types[i]);
+
+            }
+        }
+        //     $end_time = Carbon::now();
+        //
+        //     $this->send_email($start_time, $end_time, $care_givers->count() . " care givers", $a_number . " care givers", "Caregiver sync");
+    } catch (e) {
+        console.log(e)
+        // $this->send_err_email($e->getMessage(), "Caregiver sync");
+    }
 }
 
 function syncTransitClients() {
@@ -389,7 +430,7 @@ router.get("/", async (req, res) => {
     await syncPMTCT();
     await sync_dfc();
     await syncClientOutcomes();
-    syncOtherAppType();
+    await syncOtherAppType();
     // $this->syncOtherFnlOutcome();t
     // $this->syncBroadcast();t
     // $this->syncSmsQueue();t
