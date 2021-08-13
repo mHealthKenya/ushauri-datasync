@@ -1,6 +1,6 @@
 const sequelize = require("../db_config_faces");
 const Sequelize = require("sequelize");
-const {User} = require("./tbl_users");
+const {UserFaces} = require("./tbl_users");
 
 const BroadcastFaces = sequelize.sequelize.define('tbl_broadcast', {
     id: {
@@ -160,6 +160,6 @@ const BroadcastFaces = sequelize.sequelize.define('tbl_broadcast', {
     ]
   });
 
-BroadcastFaces.belongsTo(User, {foreignKey: "created_by"});
+BroadcastFaces.belongsTo(UserFaces, {foreignKey: "created_by"});
 
 module.exports.BroadcastFaces = BroadcastFaces

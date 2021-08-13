@@ -1,6 +1,6 @@
 const sequelize = require("../db_config_faces");
 const Sequelize = require("sequelize");
-const {User} = require("./tbl_users");
+const {UserFaces} = require("./tbl_users");
 
 const OtherFnlOutcomeFaces = sequelize.sequelize.define('tbl_other_final_outcome', {
     id: {
@@ -88,6 +88,6 @@ const OtherFnlOutcomeFaces = sequelize.sequelize.define('tbl_other_final_outcome
     ]
 });
 
-OtherFnlOutcomeFaces.belongsTo(User, {foreignKey: "created_by"});
+OtherFnlOutcomeFaces.belongsTo(UserFaces, {foreignKey: "created_by"});
 
 module.exports.OtherFnlOutcomeFaces = OtherFnlOutcomeFaces
