@@ -27,6 +27,8 @@ const {Transit} = require("../models_generated/tbl_transit_app");
 const {contentDisposition} = require("express/lib/utils");
 const {OtherFnlOutcomeFaces} = require("../models_faces/tbl_other_final_outcome");
 const {OtherFnlOutcome} = require("../models_generated/tbl_other_final_outcome");
+const {Broadcast} = require("../models_generated/tbl_broadcast");
+const {BroadcastFaces} = require("../models_faces/tbl_broadcast");
 moment.tz.setDefault("Africa/Nairobi");
 
 async function syncUsers() {
@@ -496,6 +498,36 @@ async function syncOtherFnlOutcome() {
 }
 
 async function syncBroadcast() {
+    try {
+        let max_existing_broadcast = await BroadcastFaces.findOne({
+            attributes: [
+                [Sequelize.fn('MAX', Sequelize.col('id')), 'id']
+            ]
+        }) || 0
+
+        let broadcasts = await Broadcast.findAll({
+            include: {
+                model: User,
+                required: true,
+                where: {partner_id: 18}
+            },
+            where: {id: {[Op.gt]: max_existing_broadcast.id}},
+            raw: true,
+            nest: true
+        })
+        console.log(broadcasts.length)
+
+        for (let i = 0; i < broadcasts.length; i++) {
+            let check_Outcome_existence = await BroadcastFaces.findOne({where: {id: broadcasts[i].id}});
+            if (!check_Outcome_existence) {
+                console.log(`Insert broadcasts details...${broadcasts[i].id}`)
+                BroadcastFaces.create(broadcasts[i]);
+            }
+        }
+
+    } catch (e) {
+        console.log(e)
+    }
 
 }
 
