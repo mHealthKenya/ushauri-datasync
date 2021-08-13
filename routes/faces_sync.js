@@ -24,6 +24,9 @@ const {OtherAppType} = require("../models_generated/tbl_other_appointment_types"
 const {OtherAppTypeFaces} = require("../models_faces/tbl_other_appointment_types");
 const {TransitFaces} = require("../models_faces/tbl_transit_app");
 const {Transit} = require("../models_generated/tbl_transit_app");
+const {contentDisposition} = require("express/lib/utils");
+const {OtherFnlOutcomeFaces} = require("../models_faces/tbl_other_final_outcome");
+const {OtherFnlOutcome} = require("../models_generated/tbl_other_final_outcome");
 moment.tz.setDefault("Africa/Nairobi");
 
 async function syncUsers() {
@@ -456,22 +459,62 @@ async function syncTransitClients() {
     }
 }
 
-router.get("/", async (req, res) => {
-    // await syncUsers();
-    // await sync_care_giver();
-    // await syncClients();
-    // await syncAppointments();
-    // await syncPMTCT();
-    // await sync_dfc();
-    // await syncClientOutcomes();
-    await syncOtherAppType();
-    // $this->syncOtherFnlOutcome();t
-    // $this->syncBroadcast();t
-    // $this->syncSmsQueue();t
-    await syncTransitClients();
-    // $this->syncUserOutgoing();t
+async function syncOtherFnlOutcome() {
+    try {
+        let max_existing_other_fnl_outcome = await OtherFnlOutcomeFaces.findOne({
+            attributes: [
+                [Sequelize.fn('MAX', Sequelize.col('id')), 'id']
+            ]
+        }) || 0
 
+        let other_outcomes = await OtherFnlOutcome.findAll({
+            include: {
+                model: User,
+                required: true,
+                where: {partner_id: 18}
+            },
+            where: {
+                id: {[Op.gt]: max_existing_other_fnl_outcome.id}
+            },
+            raw: true,
+            nest: true
+        })
+        console.log(other_outcomes.length)
+
+        for (let i = 0; i < other_outcomes.length; i++) {
+            let check_Outcome_existence = await OtherFnlOutcomeFaces.findOne({where: {id: other_outcomes[i].id}});
+            if (!check_Outcome_existence) {
+                console.log(`Insert other final outcome details...${other_outcomes[i].id}`)
+                OtherFnlOutcomeFaces.create(other_outcomes[i]);
+
+            }
+        }
+
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+async function syncBroadcast() {
+
+}
+
+router.get("/", async (req, res) => {
+    await syncUsers();
+    await sync_care_giver();
+    await syncClients();
+    await syncAppointments();
+    await syncPMTCT();
+    await sync_dfc();
+    await syncClientOutcomes();
+    await syncOtherAppType();
+    // await syncOtherFnlOutcome();
+    // await syncBroadcast();
+    // await syncSmsQueue();
+    await syncTransitClients();
+    // await syncUserOutgoing();
     //$this->syncClientOutgoing();t
+
     res.send('now')
 });
 
