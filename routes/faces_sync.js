@@ -2,11 +2,25 @@ const {User} = require("../models_generated/tbl_users");
 const {Clients} = require("../models_generated/tbl_client");
 const {CareGiver} = require("../models_generated/tbl_caregiver_not_on_care");
 const {Appointment} = require("../models_generated/tbl_appointment");
+const {DFC} = require("../models_generated/tbl_dfc_module");
+const {PMTCT} = require("../models_generated/tbl_pmtct")
+const {OtherAppType} = require("../models_generated/tbl_other_appointment_types");
+const {Transit} = require("../models_generated/tbl_transit_app");
+const {OtherFnlOutcome} = require("../models_generated/tbl_other_final_outcome");
+const {Broadcast} = require("../models_generated/tbl_broadcast");
+const {ClientOutcome} = require("../models_generated/tbl_clnt_outcome");
 
 const {UserFaces} = require("../models_faces/tbl_users");
 const {ClientsFaces} = require("../models_faces/tbl_client");
 const {CareGiverFaces} = require("../models_faces/tbl_caregiver_not_on_care");
-const {AppointmentFaces} = require("../models_faces/tbl_appointment");
+const {AppointmentFaces} = require("../models_faces/tbl_appointment")
+const {PmtctFaces} = require("../models_faces/tbl_pmtct")
+const {DFCFaces} = require("../models_faces/tbl_dfc_module")
+const { ClientOutcomeFaces} = require("../models_faces/tbl_clnt_outcome");
+const {OtherAppTypeFaces} = require("../models_faces/tbl_other_appointment_types")
+const {TransitFaces} = require("../models_faces/tbl_transit_app");
+const {OtherFnlOutcomeFaces} = require("../models_faces/tbl_other_final_outcome");
+const {BroadcastFaces} = require("../models_faces/tbl_broadcast");
 
 const Sequelize = require("sequelize");
 const Op = Sequelize.Op;
@@ -15,20 +29,7 @@ const router = express.Router();
 
 const _ = require("lodash");
 const moment = require("moment");
-const {PmtctFaces} = require("../models_faces/tbl_pmtct");
-const {DFC} = require("../models_generated/tbl_dfc_module");
-const {DFCFaces} = require("../models_faces/tbl_dfc_module");
-const {PMTCT} = require("../models_generated/tbl_pmtct");
-const {ClientOutcome, ClientOutcomeFaces} = require("../models_faces/tbl_clnt_outcome");
-const {OtherAppType} = require("../models_generated/tbl_other_appointment_types");
-const {OtherAppTypeFaces} = require("../models_faces/tbl_other_appointment_types");
-const {TransitFaces} = require("../models_faces/tbl_transit_app");
-const {Transit} = require("../models_generated/tbl_transit_app");
 const {contentDisposition} = require("express/lib/utils");
-const {OtherFnlOutcomeFaces} = require("../models_faces/tbl_other_final_outcome");
-const {OtherFnlOutcome} = require("../models_generated/tbl_other_final_outcome");
-const {Broadcast} = require("../models_generated/tbl_broadcast");
-const {BroadcastFaces} = require("../models_faces/tbl_broadcast");
 moment.tz.setDefault("Africa/Nairobi");
 
 async function syncUsers() {
